@@ -1,0 +1,23 @@
+{
+  "name": "regression-dashboard",
+  "version": "0.0.0",
+  "description": "cisco-vic-dashboard",
+  "main": "core.coffee",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/praphull27/regression-dashboard.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/praphull27/regression-dashboard/issues"
+  },
+  "homepage": "https://github.com/praphull27/regression-dashboard",
+  "dependencies": {
+    "findit": "^2.0.0",
+    "mongoose": "^3.8.13"
+  }
+}
