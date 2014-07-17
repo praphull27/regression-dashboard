@@ -6,21 +6,29 @@ mongoose.connection.on 'error',  ->
 	throw "MongoDB connection error"
 
 exports.Module = mongoose.model "Module",
-	module: String
-
-exports.Test = mongoose.model "Test",
-	module: String
-	date: Date
-	testName: String
-	status: String
-	rtlBuildLog: String
-	buildLog: String
-	simulationLog: String
-	buildErrors: Number
-	buildWarnings: Number
-	simulationErrors: Number
-	simulationWarnings: Number
+	name: String
+	date: String
+	owner: String
+	elapsedTime: String
 	reg2AttrTotal: Number
 	reg2AttrPassed: Number
 	reg2AttrFailed: Number
-	owner: String
+
+
+exports.Test = mongoose.model "Test",
+	module: type: mongoose.Schema.ObjectId, ref: "Module"
+	name: String
+	status: String
+	rtlBuildLog: 
+		path: String
+	buildLog: 
+		path: String
+		errors: Number
+		warnings: Number
+	simulationLog: 
+		path: String
+		errors: Number
+		warnings: Number
+	runtime: String
+	seed: Number
+

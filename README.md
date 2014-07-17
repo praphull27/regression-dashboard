@@ -1,2 +1,2 @@
-cisco-vic-dashboard
-===================
+regression-dashboard
+====================
