@@ -29,6 +29,7 @@ findFiles = (parentDir, fileToFind, callback) ->
 
 
 writeToDb = (modelCol, testCol, callback) ->
+	noError = null
 	db.Module.findOneAndUpdate {name: modelCol.name, date: modelCol.date},
 		name: modelCol.name
 		date: modelCol.date
@@ -40,11 +41,13 @@ writeToDb = (modelCol, testCol, callback) ->
 	, upsert: true, new: true
 	, (err, resp) ->
 		if err?
+			console.log modelCol.date + '/' + modelCol.name + ' : Error'
 			return callback err
 		else
 			n = (testCol.name).length
 			n -= 1
-			if n <= 0?
+			if n < 0?
+				console.log modelCol.date + '/' + modelCol.name + ' : Completed'
 				return callback null
 			for i in [0..n]
 				db.Test.findOneAndUpdate {module: resp._id, name: testCol.name[i]},
@@ -61,16 +64,21 @@ writeToDb = (modelCol, testCol, callback) ->
 						path: testCol.simPath[i]
 						errors: testCol.simErr[i]
 						warnings: testCol.simWarn[i]
-					#runtime: testCol.time[i]
-					#seed: testCol.seed[i]
+					runtime: testCol.time[i]
+					seed: testCol.seed[i]
 				, upsert: true, new: true
 				, (err1, res) ->
 					if err1?
 						console.log modelCol
 						console.log testCol
 						console.log err1
-			console.log modelCol.date + '/' + modelCol.name + ' : Completed'
-			return callback null
+						noError = err1
+			if noError?
+				console.log modelCol.date + '/' + modelCol.name + ' : Error'
+				return callback noError
+			else
+				console.log modelCol.date + '/' + modelCol.name + ' : Completed'
+				return callback null
 
 
 readFiles = (file, callback) ->
@@ -108,6 +116,7 @@ readFiles = (file, callback) ->
 			fileText = data.toString()
 			lines = fileText.split("\n")
 			for line in lines
+				line = line.trim()
 				if line.indexOf('==>Elapsed Time=') > -1
 					elapsedTime = line.match /\'(.*)\'/
 					modelCol.time = elapsedTime[1]
@@ -126,6 +135,20 @@ readFiles = (file, callback) ->
 					name = line.match /^=>TEST *[A-Z]+ * \'(.*)\'.*$/
 					(testCol.status).push status[1]
 					(testCol.name).push name[1]
+					if (testCol.name).length != (testCol.time).length
+						(testCol.time).push null
+					if (testCol.name).length != (testCol.seed).length
+						(testCol.seed).push null
+					if (testCol.name).length != (testCol.rtlPath).length
+						(testCol.rtlPath).push null
+					if (testCol.name).length != (testCol.bldPath).length
+						(testCol.bldPath).push null
+						(testCol.bldErr).push null
+						(testCol.bldWarn).push null
+					if (testCol.name).length != (testCol.simPath).length
+						(testCol.simPath).push null
+						(testCol.simErr).push null
+						(testCol.simWarn).push null
 				if line.indexOf('=>RUNTIME') > -1
 					runTime = line.match /^=>RUNTIME *\'(.*)\' *\'.*\'$/
 					(testCol.time).push runTime[1]
@@ -158,13 +181,13 @@ extractData = (filePaths, done) ->
 	for date in Object.keys(filePaths)
 		dates.push date if dates.indexOf(date) is -1
 	dates.sort()
-	#top10Dates = dates.slice(Math.max(dates.length - 10, 1))
-	top10Dates = dates
+	top10Dates = dates.slice(Math.max(dates.length - 10, 1))
+	#top10Dates = dates
 	files = []
 	for date in top10Dates
 		for file in filePaths[date]
 			files.push file if files.indexOf(file) is -1
-	async.eachLimit files, 10
+	async.eachLimit files, 25
 	, (file, callback) ->
 		readFiles file, (err) ->
 			callback err
@@ -186,7 +209,9 @@ findFiles parentDir, fileToFind, (date, file, status, err) ->
 				process.exit 1
 			else
 				console.log "Success"
-				#process.exit 0
+				now = new Date
+				console.log now
+				setTimeout (() -> process.exit(0)), 300000
 	else
 		if filePaths[date]?
 			(filePaths[date]).push file
