@@ -1,0 +1,24 @@
+{
+  "name": "regression-dashboard",
+  "version": "0.0.0",
+  "description": "regression-dashboard",
+  "main": "core.coffee",
+  "authors": [
+    "Praphull Kumar"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "mongoose": "LearnBoost/mongoose#~3.9.0",
+    "node-findit": "substack/node-findit#~2.0.0",
+    "async": "~0.9.0",
+    "bootstrap": "~3.2.0"
+  }
+}
