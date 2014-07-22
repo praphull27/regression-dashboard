@@ -8,17 +8,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/praphull27/regression-dashboard.git"
+    "url": ""
   },
-  "author": "",
+  "author": "Praphull Kumar",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/praphull27/regression-dashboard/issues"
-  },
-  "homepage": "https://github.com/praphull27/regression-dashboard",
+  "homepage": "",
   "dependencies": {
     "async": "^0.9.0",
+    "bootstrap": "^3.2.0",
     "findit": "^2.0.0",
     "mongoose": "^3.8.13"
-  }
+  },
+  "keywords": [
+    "regression",
+    "dashboard"
+  ]
 }
