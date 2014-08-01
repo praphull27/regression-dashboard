@@ -138,7 +138,7 @@ readFiles = (file, callback) ->
 				if line.indexOf('=>TEST') > -1
 					status = line.match /^=>TEST *([A-Z]+) * \'.*\'.*$/
 					name = line.match /^=>TEST *[A-Z]+ * \'(.*)\'.*$/
-					(testCol.status).push status[1]
+					(testCol.status).push (status[1]).toLowerCase()
 					(testCol.name).push name[1]
 					if (testCol.name).length != (testCol.time).length
 						(testCol.time).push null
@@ -200,8 +200,8 @@ extractData = (filePaths, done) ->
 		dateStart -= 1
 	if dateEnd < 1 
 		dateEnd = 0
-	#topDates = dates.slice(dateStart, dateEnd)
-	topDates = dates
+	topDates = dates.slice(dateStart, dateEnd)
+	#topDates = dates
 	files = []
 	for date in topDates
 		for file in filePaths[date]

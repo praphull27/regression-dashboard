@@ -79,13 +79,57 @@ exports.getModulesByOwner = (owner, callback) ->
 		return callback err if err?
 		return callback null, modules
 
+
+###
+	APIs to get the details about Tests.
+###
+
+exports.getTestById = (testId, callback) ->
+	db.Test.find
+		_id: testId
+	, (err, test) ->
+		return callback err if err?
+		return callback null, test
+
+exports.getTestsByModule = (moduleId, callback) ->
+	db.Test.find 
+		module: moduleId
+	, (err, tests) ->
+		return callback err if err?
+		return callback null, tests
+
+exports.getTestsByName = (name, callback) ->
+	db.Test.find 
+		name: name
+	, (err, tests) ->
+		return callback err if err?
+		return callback null, tests
+
+exports.getTestsByStatus = (status, callback) ->
+	db.Test.find 
+		status: status
+	, (err, tests) ->
+		return callback err if err?
+		return callback null, tests
+
+exports.getTestsByNameAndStatus = () ->
+
+
+exports.getTestByModuleAndName = () ->
+
+
+exports.getTestsByModuleAndStatus = () ->
+
+
 exports.getPassedCountByModule = (moduleId, callback) ->
 	db.Test.count 
 		module: moduleId
-		status: /^passed$/i
+		status: /^passed$/
 	, (err, passed) ->
-		return callback err if err?
-		return callback null, passed
+		#return callback err if err?
+		#return callback null, passed
+		console.log passed
+		console.log err
 
 exports.getFailedCountByModule = (moduleId, callback) ->
 	db.Test.count 
@@ -102,34 +146,3 @@ exports.getIndeterminateCountByModule = (moduleId, callback) ->
 	, (err, indeterminate) ->
 		return callback err if err?
 		return callback null, indeterminate
-
-
-###
-	APIs to get the details about Tests.
-###
-
-exports.getTestById = () ->
-	
-
-exports.getTestsByModule = (moduleId, callback) ->
-	db.Test.find 
-		module: moduleId
-	, (err, tests) ->
-		return callback err if err?
-		return callback null, tests
-
-exports.getTestsByName = () ->
-
-
-exports.getTestsByStatus = () ->
-
-
-exports.getTestsByNameAndStatus = () ->
-
-
-exports.getTestByModuleAndName = () ->
-
-
-exports.getTestsByModuleAndStatus = () ->
-
-

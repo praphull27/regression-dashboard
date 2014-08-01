@@ -7,7 +7,9 @@ mongoose.connection.on 'error',  ->
 
 exports.Module = mongoose.model "Module",
 	name: String
-	date: type: String, index: true
+	date: 
+		type: String
+		index: true
 	owner: String
 	elapsedTime: String
 	reg2AttrTotal: Number
@@ -16,7 +18,10 @@ exports.Module = mongoose.model "Module",
 
 
 exports.Test = mongoose.model "Test",
-	module: type: mongoose.Schema.ObjectId, ref: "Module", index: true
+	module: 
+		type: mongoose.Schema.ObjectId
+		ref: "Module"
+		index: true
 	name: String
 	status: String
 	rtlBuildLog: 
