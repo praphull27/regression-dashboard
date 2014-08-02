@@ -2,17 +2,17 @@ db = require "./db"
 fs = require "fs"
 path = require 'path'
 async = require 'async'
+argv = require('optimist').argv
 
-parentDir = process.argv[2].replace /\/*$/, ''
+parentDir = (argv.dir).replace /\/*$/, ''
 parentDir += '/'
 
 finder = require('findit')(parentDir)
 
-fileToFind = process.argv[3]
+fileToFind = argv.file
 filePaths = {}
-
-dateStart = process.argv[4]
-dateEnd = process.argv[5]
+dateStart = argv.start
+dateEnd = argv.end
 
 
 findFiles = (parentDir, fileToFind, callback) ->
@@ -190,18 +190,13 @@ extractData = (filePaths, done) ->
 	if dates.length == 0
 		error = 'No Data found. Test Results for each day should be placed in ' + parentDir + '$TimeStamp$/*. For example ' + parentDir + '07.19.2014.22.00/*'
 		return done error
-	if dates.length < dateEnd
-		dateEnd = dates.length
-	if date.length < dateStart
-		dateStart = dates.length
-	if dateStart < 1 
-		dateStart = 0
-	else
-		dateStart -= 1
-	if dateEnd < 1 
-		dateEnd = 0
-	topDates = dates.slice(dateStart, dateEnd)
-	#topDates = dates
+	if isNaN(dateEnd) and isNaN(dateStart)
+		topDates = dates
+	else 
+		if isNaN(dateEnd)
+			topDates = dates.slice(dateStart)
+		else
+			topDates = dates.slice(dateStart, dateEnd)
 	files = []
 	for date in topDates
 		for file in filePaths[date]
@@ -230,7 +225,7 @@ findFiles parentDir, fileToFind, (date, file, status, err) ->
 				console.log "Success"
 				now = new Date
 				console.log now
-				setTimeout (() -> process.exit(0)), 300000
+				setTimeout (() -> process.exit(0)), 60000
 	else
 		if filePaths[date]?
 			(filePaths[date]).push file
