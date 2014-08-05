@@ -87,7 +87,6 @@ writeToDb = (modelCol, testCol, callback) ->
 
 
 readFiles = (file, callback) ->
-	#console.log file
 	modelCol = {}
 	modelCol.name = null
 	modelCol.date = null
@@ -111,9 +110,12 @@ readFiles = (file, callback) ->
 	dirName = path.dirname file
 	dateTemp = dirName.replace parentDir, ''
 	date = dateTemp.replace /\/.*$/, ''
-	modelName = dateTemp.replace date+'/', ''
+	if date.match(/(\d\d\.\d\d\.\d\d\d\d\.\d\d\.\d\d)$/) is null
+		modelName = dateTemp
+	else
+		modelName = dateTemp.replace date+'/', ''
+		modelCol.date = date
 	modelCol.name = modelName
-	modelCol.date = date
 	fs.readFile file, (err, data) -> 
 		if err?
 			return callback err
@@ -122,6 +124,9 @@ readFiles = (file, callback) ->
 			lines = fileText.split("\n")
 			for line in lines
 				line = line.trim()
+				if line.indexOf('PROJ_SRC_ROOT') > -1
+					date = line.match /(\d\d\.\d\d\.\d\d\d\d\.\d\d\.\d\d)$/
+					modelCol.date = date[1]
 				if line.indexOf('==>Elapsed Time=') > -1
 					elapsedTime = line.match /\'(.*)\'/
 					modelCol.time = elapsedTime[1]
@@ -225,7 +230,8 @@ findFiles parentDir, fileToFind, (date, file, status, err) ->
 				console.log "Success"
 				now = new Date
 				console.log now
-				setTimeout (() -> process.exit(0)), 60000
+				#setTimeout (() -> process.exit(0)), 15000
+				process.exit 0
 	else
 		if filePaths[date]?
 			(filePaths[date]).push file
@@ -233,3 +239,8 @@ findFiles parentDir, fileToFind, (date, file, status, err) ->
 			filePaths[date] = []
 			(filePaths[date]).push file
 
+
+#Command to get Latest Run Details: coffee loadDataToDB.coffee --dir='/users/regress/uregress/bodega.latest' --file='results.log'
+#Command to get Yesterday's Run Details: coffee loadDataToDB.coffee --dir='/users/regress/uregress/bodega.yesterday' --file='results.log'
+#Command to get all details from Archive: coffee loadDataToDB.coffee --dir='/users/regress/archives/bodega/' --file='results.log'
+#Command to get details for last 10 days except latest 2 days: coffee loadDataToDB.coffee --dir='/users/regress/archives/bodega/' --file='results.log' --start 2 --end 10
