@@ -10,27 +10,19 @@ parentDir += '/'
 finder = require('findit')(parentDir)
 
 fileToFind = argv.file
-filePaths = {}
-dateStart = argv.start
-dateEnd = argv.end
+filePaths = []
+delay = argv.delay
 
 
 findFiles = (parentDir, fileToFind, callback) ->
-	now = new Date
-	console.log now
 	finder.on 'file', (file) ->
 		fileName = path.basename file
-		dirName = path.dirname file
-		dirNameOfDir = path.dirname dirName
-		lastDir = dirNameOfDir.slice(-4)
-		dateTemp = dirName.replace parentDir, ''
-		date = dateTemp.replace /\/.*$/, ''
-		if fileName is fileToFind && lastDir is '/env'
-			return callback date, file, null, null
+		if fileName is fileToFind
+			return callback file, null, null
 	finder.on 'end', () ->
-		return callback null, null, 1, null
+		return callback null, 1, null
 	finder.on 'error', (err) ->
-		return callback null, null, null, err
+		return callback null, null, err
 
 
 writeToDb = (modelCol, testCol, callback) ->
@@ -46,13 +38,12 @@ writeToDb = (modelCol, testCol, callback) ->
 	, upsert: true, new: true
 	, (err, resp) ->
 		if err?
-			console.log modelCol.date + '/' + modelCol.name + ' : Error'
+			console.log modelCol.date + ' : ' + modelCol.name + ' : Error'
 			return callback err
 		else
 			n = (testCol.name).length
 			n -= 1
-			if n < 0?
-				console.log modelCol.date + '/' + modelCol.name + ' : Completed'
+			if n < 0
 				return callback null
 			for i in [0..n]
 				db.Test.findOneAndUpdate {module: resp._id, name: testCol.name[i]},
@@ -79,43 +70,17 @@ writeToDb = (modelCol, testCol, callback) ->
 						console.log err1
 						noError = err1
 			if noError?
-				console.log modelCol.date + '/' + modelCol.name + ' : Error'
+				console.log modelCol.date + ' : ' + modelCol.name + ' : Error'
 				return callback noError
 			else
-				console.log modelCol.date + '/' + modelCol.name + ' : Completed'
 				return callback null
 
 
 readFiles = (file, callback) ->
+	first = 0
+	prjSrc = ''
 	modelCol = {}
-	modelCol.name = null
-	modelCol.date = null
-	modelCol.time = null
-	modelCol.owner = null
-	modelCol.attrTotal = null
-	modelCol.attrPassed = null
-	modelCol.attrFailed = null
 	testCol = {}
-	testCol.status = []
-	testCol.name = []
-	testCol.time = []
-	testCol.seed = []
-	testCol.rtlPath = []
-	testCol.bldPath = []
-	testCol.bldErr = []
-	testCol.bldWarn = []
-	testCol.simPath = []
-	testCol.simErr = []
-	testCol.simWarn = []
-	dirName = path.dirname file
-	dateTemp = dirName.replace parentDir, ''
-	date = dateTemp.replace /\/.*$/, ''
-	if date.match(/(\d\d\.\d\d\.\d\d\d\d\.\d\d\.\d\d)$/) is null
-		modelName = dateTemp
-	else
-		modelName = dateTemp.replace date+'/', ''
-		modelCol.date = date
-	modelCol.name = modelName
 	fs.readFile file, (err, data) -> 
 		if err?
 			return callback err
@@ -125,8 +90,42 @@ readFiles = (file, callback) ->
 			for line in lines
 				line = line.trim()
 				if line.indexOf('PROJ_SRC_ROOT') > -1
-					date = line.match /(\d\d\.\d\d\.\d\d\d\d\.\d\d\.\d\d)$/
+					prjSrc = line.match /^PROJ_SRC_ROOT\s*\=(.*)$/
+					prjSrc = (prjSrc[1]).trim()
+					if first != 0
+						writeToDb modelCol, testCol, (err1) ->
+							if err1?
+								return callback err1
+					modelCol = {}
+					modelCol.name = null
+					modelCol.date = null
+					modelCol.time = null
+					modelCol.owner = null
+					modelCol.attrTotal = null
+					modelCol.attrPassed = null
+					modelCol.attrFailed = null
+					testCol = {}
+					testCol.status = []
+					testCol.name = []
+					testCol.time = []
+					testCol.seed = []
+					testCol.rtlPath = []
+					testCol.bldPath = []
+					testCol.bldErr = []
+					testCol.bldWarn = []
+					testCol.simPath = []
+					testCol.simErr = []
+					testCol.simWarn = []
+					first = 1
+				if line.indexOf('PROJ_GEN_ROOT') > -1
+					prjGen = line.match /^PROJ_GEN_ROOT\s*\=(.*)$/
+					prjGen = (prjGen[1]).trim()
+					prjSrc = prjSrc.replace /src/g, 'gen'
+					name = prjGen.replace prjSrc, ''
+					name = name.replace /^\/*/, ''
+					date = line.match /(\d\d\.\d\d\.\d\d\d\d\.\d\d\.\d\d)/
 					modelCol.date = date[1]
+					modelCol.name = name
 				if line.indexOf('==>Elapsed Time=') > -1
 					elapsedTime = line.match /\'(.*)\'/
 					modelCol.time = elapsedTime[1]
@@ -182,31 +181,15 @@ readFiles = (file, callback) ->
 					(testCol.simPath).push sim[1]
 					(testCol.simErr).push Number(simErr[1])
 					(testCol.simWarn).push Number(simWarn[1])
-			writeToDb modelCol, testCol, (err1) ->
-				return callback err1
+			if first != 0
+				writeToDb modelCol, testCol, (err2) ->
+					return callback err2
+			else
+				return callback null
 
 
 extractData = (filePaths, done) ->
-	dates = []
-	for date in Object.keys(filePaths)
-		dates.push date if dates.indexOf(date) is -1
-	dates.sort()
-	dates.reverse()
-	if dates.length == 0
-		error = 'No Data found. Test Results for each day should be placed in ' + parentDir + '$TimeStamp$/*. For example ' + parentDir + '07.19.2014.22.00/*'
-		return done error
-	if isNaN(dateEnd) and isNaN(dateStart)
-		topDates = dates
-	else 
-		if isNaN(dateEnd)
-			topDates = dates.slice(dateStart)
-		else
-			topDates = dates.slice(dateStart, dateEnd)
-	files = []
-	for date in topDates
-		for file in filePaths[date]
-			files.push file if files.indexOf(file) is -1
-	async.eachLimit files, 100
+	async.eachSeries filePaths
 	, (file, callback) ->
 		readFiles file, (err) ->
 			callback err
@@ -217,9 +200,11 @@ extractData = (filePaths, done) ->
 			return done null
 
 
-findFiles parentDir, fileToFind, (date, file, status, err) ->
+findFiles parentDir, fileToFind, (file, status, err) ->
 	if err?
 		console.log err
+		console.log "Fail"
+		process.exit 1
 	else if status?
 		extractData filePaths, (error) ->
 			if error?
@@ -227,20 +212,11 @@ findFiles parentDir, fileToFind, (date, file, status, err) ->
 				console.log "Fail"
 				process.exit 1
 			else
-				console.log "Success"
-				now = new Date
-				console.log now
-				#setTimeout (() -> process.exit(0)), 15000
-				process.exit 0
+				setTimeout (() -> process.exit(0)), 15000
 	else
-		if filePaths[date]?
-			(filePaths[date]).push file
-		else
-			filePaths[date] = []
-			(filePaths[date]).push file
+		filePaths.push file
 
 
 #Command to get Latest Run Details: coffee loadDataToDB.coffee --dir='/users/regress/uregress/bodega.latest' --file='results.log'
 #Command to get Yesterday's Run Details: coffee loadDataToDB.coffee --dir='/users/regress/uregress/bodega.yesterday' --file='results.log'
 #Command to get all details from Archive: coffee loadDataToDB.coffee --dir='/users/regress/archives/bodega/' --file='results.log'
-#Command to get details for last 10 days except latest 2 days: coffee loadDataToDB.coffee --dir='/users/regress/archives/bodega/' --file='results.log' --start 2 --end 10

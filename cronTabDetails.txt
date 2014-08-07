@@ -2,5 +2,4 @@ SHELL=/bin/bash
 
 */5 * * * *	/auto/savbu-asic-files/regression-dashboard/cronLatest.sh
 */5 * * * *	/auto/savbu-asic-files/regression-dashboard/cronYesterday.sh
-1 * * * *	/auto/savbu-asic-files/regression-dashboard/cronArchiveUpdateDay2To10.sh
-2 0 * * *	/auto/savbu-asic-files/regression-dashboard/cronArchiveCompleteUpdate.sh
+1 * * * *	/auto/savbu-asic-files/regression-dashboard/cronArchiveCompleteUpdate.sh
